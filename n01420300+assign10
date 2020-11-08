@@ -1,0 +1,236 @@
+/* DDL FOR CUSTOMER */
+
+CREATE TABLE `customer` (
+  `CUS_CODE` int NOT NULL,
+  `CUS_LNAME` char(10) DEFAULT NULL,
+  `CUS_FNAME` char(10) DEFAULT NULL,
+  `CUS_INITIAL` char(1) DEFAULT NULL,
+  `CUS_AREACODE` int DEFAULT NULL,
+  `CUS_PHONE` varchar(8) DEFAULT NULL,
+  `CUS_BALANCE` varchar(8) DEFAULT '0.00',
+  PRIMARY KEY (`CUS_CODE`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+
+/* DDL FOR INVOICE */
+
+CREATE TABLE `invoice` (
+  `INV_NUMBER` int NOT NULL,
+  `CUS_CODE` int DEFAULT NULL,
+  `INV_DATE` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`INV_NUMBER`),
+  KEY `CUS_CODE_idx` (`CUS_CODE`),
+  KEY `Customer Code_idx` (`CUS_CODE`),
+  CONSTRAINT `Customer Code` FOREIGN KEY (`CUS_CODE`) REFERENCES `customer` (`CUS_CODE`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+
+/* DDL FOR LINE */
+
+CREATE TABLE `line` (
+  `INV_NUMBER` int NOT NULL,
+  `LINE_NUMBER` int NOT NULL,
+  `P_CODE` varchar(8) DEFAULT NULL,
+  `LINE_UNITS` int DEFAULT NULL,
+  `LINE_PRICE` varchar(8) DEFAULT '0.00',
+  PRIMARY KEY (`INV_NUMBER`,`LINE_NUMBER`),
+  KEY `Product Code_idx` (`P_CODE`),
+  CONSTRAINT `INV_NUMBER` FOREIGN KEY (`INV_NUMBER`) REFERENCES `invoice` (`INV_NUMBER`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `Product Code` FOREIGN KEY (`P_CODE`) REFERENCES `product` (`P_CODE`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+
+/* DDL FOR PRODUCT */
+
+CREATE TABLE `product` (
+  `P_CODE` varchar(8) NOT NULL,
+  `P_DESCRIPT` varchar(100) DEFAULT NULL,
+  `P_INDATE` varchar(45) DEFAULT NULL,
+  `P_ONHAND` int DEFAULT NULL,
+  `P_MIN` int DEFAULT NULL,
+  `P_PRICE` varchar(8) DEFAULT '0.00',
+  `P_DISCOUNT` varchar(8) DEFAULT '0.00',
+  `V_CODE` int DEFAULT NULL,
+  PRIMARY KEY (`P_CODE`),
+  KEY `Vendor_Code_idx` (`V_CODE`),
+  CONSTRAINT `Vendor Code` FOREIGN KEY (`V_CODE`) REFERENCES `vendor` (`V_CODE`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+
+/* DDL FOR VENDOR */
+
+CREATE TABLE `vendor` (
+  `V_CODE` int NOT NULL,
+  `V_NAME` varchar(45) DEFAULT NULL,
+  `V_CONTACT` char(20) DEFAULT NULL,
+  `V_AREACODE` int DEFAULT NULL,
+  `V_PHONE` varchar(8) DEFAULT NULL,
+  `V_STATE` char(2) DEFAULT NULL,
+  `V_ORDER` char(1) DEFAULT NULL,
+  PRIMARY KEY (`V_CODE`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+
+
+
+
+
+/* Question 3 */
+
+SELECT customer.CUS_CODE, invoice.INV_NUMBER, invoice.INV_DATE, product.P_DESCRIPT, 
+line.LINE_UNITS, line.LINE_PRICE
+
+FROM customer, invoice, line, product
+
+WHERE customer.CUS_CODE = invoice.CUS_CODE
+
+AND invoice.INV_NUMBER = line.INV_NUMBER
+
+AND product.P_CODE = line.P_CODE
+
+ORDER BY invoice.CUS_CODE, invoice.INV_NUMBER, product.P_DESCRIPT;
+
+
+/* Question 4 */
+
+SELECT customer.CUS_CODE, invoice.INV_NUMBER, invoice.INV_DATE, product.P_DESCRIPT, 
+line.LINE_UNITS AS 'Units Bought', line.LINE_PRICE as 'Unit Price', line.LINE_UNITS * line.LINE_UNITS 
+AS Subtotal
+
+FROM customer, invoice, line, product
+
+WHERE customer.CUS_CODE = invoice.CUS_CODE
+
+AND invoice.INV_NUMBER = line.INV_NUMBER
+
+AND product.P_CODE = line.P_CODE
+
+ORDER BY invoice.CUS_CODE, invoice.INV_NUMBER, product.P_DESCRIPT;
+
+
+/* Question 5 */
+
+SELECT invoice.CUS_CODE, customer.CUS_BALANCE, sum(line.LINE_UNITS * line.LINE_PRICE) AS 'Total Purchases' 
+
+FROM customer, invoice, line 
+
+WHERE invoice.INV_NUMBER = line.INV_NUMBER
+
+AND customer.CUS_CODE = invoice.CUS_CODE
+
+GROUP BY invoice.CUS_CODE, customer.CUS_BALANCE;
+
+
+/* Question 6 */
+
+SELECT  line.INV_NUMBER,    Sum(line.LINE_UNITS*line.LINE_PRICE) AS 'Invoice Total' 
+
+FROM  line 
+
+GROUP BY  line.INV_NUMBER;
+
+
+/* Question 7 */
+
+SELECT CUS_CODE, line.INV_NUMBER AS INV_NUMBER, Sum(line.LINE_UNITS * line.LINE_PRICE) AS INV_TOT
+
+FROM invoice, line
+
+WHERE invoice.INV_NUMBER = ine.INV_NUMBER
+
+GROUP BY CUS_CODE, line.INV_NUMBER;
+
+
+/* Question 8 */
+
+SELECT CUS_CODE, CUS_BALANCE
+
+FROM customer
+
+WHERE customer.CUS_CODE IN (SELECT DISTINCT CUS_CODE = INVOICE.CUS_CODE);
+
+GROUP BY CUS_CODE, line.INV_NUMBER;
+
+
+/* Question 9 */
+
+SELECT Sum(CUS_BALANCE) AS 'Total Balance', Min(CUS_BALANCE) AS 'Minimum Balance', 
+Max(CUS_BALANCE) AS 'Maximum Balance', Avg(CUS_BALANCE) AS 'Average Balance'
+
+FROM customer;
+
+
+/* Question 10 */
+
+SELECT invoice.CUS_CODE, customer.CUS_BALANCE, Sum(line.LINE_UNITS * line.LINE_PRICE) AS
+'Total Purchases', Count(*) AS 'Number of Purchases'
+AVG(line.LINE_UNITS * line.LINE_PRICE) AS 'Average Purchase Amount'
+
+FROM customer, invoice, line
+
+WHERE invoice.INV_NUMBER = line.INV_NUMBER
+
+AND customer.CUS_CODE = invoice.CUS_CODE
+
+GROUP BY invoice.CUD_CODE, customer.CUS_BALANCE;
+
+
+/* Question 11 */
+
+SELECT invoice.CUS_CODE, customers.CUS_BALANCE, Sum(line.LINE_UNITS*line.LINE_PRICE) AS 'Total Purchases',
+Count(*) AS 'Number of Purchases', AVG(line.LINE_UNITS*line.LINE_PRICE) AS 'Average Purchase Amount'
+
+FROM customer, invoice, line
+
+WHERE invoice.INV_NUMBER = line.INV_NUMBER
+
+AND customer.CUS_CODE=invoice.CUS_CODE
+
+GROUP BY invoice.CUS_CODE, customer.CUS_BALANCE;
+
+
+/* Question 12 */
+
+SELECT CUS_CODE, CUS_BALANCE
+
+FROM customer
+
+WHERE customer.CUS_CODE NOT IN (SELECT DISTINCT CUS_CODE FROM invoice);
+
+
+/* Question 13 */
+
+SELECT Sum(CUS_BALANCE) AS 'Total Balance',
+       Min(CUS_BALANCE) AS 'Minimum Balance',
+       Max(CUS_BALANCE) AS 'Maximum Balance',
+       AVG(CUS_BALANCE) AS 'Average Balance',
+
+FROM customer;
+
+WHERE CUS_CODE NOT IN (SELECT CUS_CODE FROM invoice);
+
+
+/* Question 14 */
+/* (NOTE: CODE DOES NOT DISPLAY CORRECT ANSWER. COULD NOT FIGURE OUT HOW TO FIND 
+ANSWER. THIS QUESTION WAS VERY DIFFICULT) */
+
+SELECT CUS_CODE, CUS_BALANCE
+FROM customer JOIN invoice USING (CUS_CODE)
+			  JOIN line USING (INV_NUMBER)
+              
+WHERE P_CODE NOT IN (SELECT P_CODE
+				FROM product
+                WHERE  P_DESCRIPT = '7.25-in. pwr. saw blade');
+
+
+/* QUESTION 15 */
+
+/* (NOTE: CODE HERE ALSO DOES NOT DISPLAY CORRECT ANSWER. COULD NOT FIGURE OUT HOW TO FIND 
+ANSWER AS THIS QUESTION WAS VERY DIFFICULT. HERE IS THE BEST I COULD COME UP WITH) */
+
+SELECT customer.CUS_CODE, sum(line.LINE_UNITS) AS 'TOTAL_LINE_UNITS'
+
+FROM customer,line 
+
+GROUP BY CUS_CODE
+HAVING sum(line_UNITS) >= 6;
